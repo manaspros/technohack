@@ -61,10 +61,10 @@ export default function RootLayout({
           <main>{children}</main>
           <footer className="py-8 text-center font-mono">
             <p className="mb-2">
-              © 2023 Tech Stack Mastery. Level up your coding skills.
+              © 2025 Tech Stack Mastery. Level up your coding skills.
             </p>
             <p className="text-xs text-gray-500">
-              Powered by AI Learning Assistant • Helping developers since 2023
+              Powered by AI Learning Assistant • Helping developers since 2025
             </p>
           </footer>
         </div>

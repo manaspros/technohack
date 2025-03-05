@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import BlinkingCursor from "../components/BlinkingCursor";
 import LearningPathDiagram from "../components/LearningPathDiagram";
 import { cn } from "@/lib/utils";
+import styles from "../components/CustomScrollbar.module.css";
 
 // ...existing types and constants...
 type Message = {
@@ -635,8 +636,13 @@ export default function ChatbotPage() {
         </p>
       </div>
 
-      {/* Messages container */}
-      <div className="flex-grow overflow-y-auto px-4 py-2 border-2 border-green-400 bg-gray-950 rounded-lg mb-4">
+      {/* Messages container with custom scrollbar */}
+      <div
+        className={cn(
+          "flex-grow overflow-y-auto px-4 py-2 border-2 border-green-400 bg-gray-950 rounded-lg mb-4",
+          styles.pixelScrollbar
+        )}
+      >
         {messages.map((message, index) => (
           <motion.div
             key={message.id}
