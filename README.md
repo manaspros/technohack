@@ -18,7 +18,7 @@
 ## **Getting Started**  
 1. Clone the repository:  
    ```bash
-   git clone https://github.com/your-username/techstack-gpt.git  
+   git clone https://github.com/manaspros/TechStack-Chatbot.git  
    cd techstack-gpt
    ```
 2. Install dependencies:  
