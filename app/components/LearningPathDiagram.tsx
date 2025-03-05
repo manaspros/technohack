@@ -16,6 +16,11 @@ import {
 import { cn } from "@/lib/utils";
 import styles from "./CustomScrollbar.module.css";
 
+// API URL from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/explain-step`
+  : "http://localhost:5000/explain-step";
+
 interface LearningStep {
   id: string;
   title: string;
@@ -77,7 +82,7 @@ const LearningPathDiagram: React.FC<LearningPathDiagramProps> = ({
       setLoadingStepId(stepId);
       setExpandedStepId(stepId);
 
-      const response = await fetch("/api/explain-step", {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

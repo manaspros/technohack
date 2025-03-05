@@ -41,8 +41,10 @@ type LearningStep = {
   type: "prerequisite" | "core" | "practice" | "advanced";
 };
 
-// API endpoint configuration
-const API_URL = "http://localhost:5000/chat";
+// API endpoint configuration from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/chat`
+  : "http://localhost:5000/chat";
 
 // Function to detect questions in the text
 const detectQuestions = (text: string): string[] => {
@@ -501,7 +503,7 @@ export default function ChatbotPage() {
     }
   };
 
-  // Function to call the backend API
+  // Updated function to call the backend API with environment variable URL
   const fetchBotResponse = async (
     userText: string,
     generateLearningPath: boolean = false
