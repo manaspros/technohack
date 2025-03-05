@@ -42,7 +42,7 @@ type LearningStep = {
 };
 
 // API endpoint configuration
-const API_URL = "http://localhost:5000/chat";
+const API_URL = "https://techstack-backend.onrender.com/chat";
 
 // Function to detect questions in the text
 const detectQuestions = (text: string): string[] => {
