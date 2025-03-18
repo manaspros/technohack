@@ -13,6 +13,10 @@
   /* For glowing effect */
   --black: #000;
   --white: #fff;
+
+  /* Hero highlight dot colors */
+  --dot-default: #404040;
+  --dot-hover: #4ade80;
 }
 
 .light-theme {
@@ -22,6 +26,10 @@
   --accent-color: 109, 40, 217;
   --header-color: 3, 105, 161;
   --border-color: 4, 120, 87;
+
+  /* Hero highlight dot colors */
+  --dot-default: #d4d4d4;
+  --dot-hover: #10b981;
 }
 
 /* Support for rounded xl values */
@@ -42,6 +50,20 @@
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Hero highlight custom animations */
+@keyframes pixel-scan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+.animate-pixel-scan {
+  animation: pixel-scan 2s steps(20) infinite;
 }
 
 body {

@@ -1,18 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import ActionSearchBar from "../components/kokonutui/action-search-bar";
-import {
-  Code,
-  BookOpen,
-  Camera,
-  Headphones,
-  Zap,
-  FilmIcon,
-} from "lucide-react";
+import { Code, Camera, Headphones, Zap, FilmIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
+import HeroHighlightDemo from "@/components/hero-highlight-demo";
 
 export default function Home() {
   const router = useRouter();
@@ -49,30 +42,20 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-12">
-      <section className="mt-8 mb-16">
+    <div className="space-y-8">
+      {/* Hero highlight section */}
+      <section className="mt-0 mb-8 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
+        <HeroHighlightDemo />
+      </section>
+
+      <section className="mt-0 mb-16">
         <h2 className="text-2xl font-bold font-pixel mb-6 text-center">
           Ask, Upload or Record Anything
         </h2>
         <ActionSearchBar />
       </section>
 
-      <div className="min-h-[70vh] flex flex-col items-center justify-start gap-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto"
-        >
-          <h2 className="text-3xl md:text-4xl font-pixel mb-6 text-green-400">
-            Your Multimodal AI Assistant
-          </h2>
-          <p className="font-mono mb-10 text-lg md:text-xl">
-            A chatbot that can see images, hear audio, understand code, and
-            process text all at the same time.
-          </p>
-        </motion.div>
-
+      <div className="min-h-[40vh] flex flex-col items-center justify-start gap-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

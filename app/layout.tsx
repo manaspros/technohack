@@ -43,20 +43,8 @@ export default function RootLayout({
         </div>
         <PixelatedBackground />
         <div className="max-w-5xl mx-auto px-4">
-          <header className="py-12 flex flex-col items-center">
+          <header className="py-8 flex flex-col items-center">
             <ColorfulPixelLogo />
-            <h1 className="text-5xl font-bold text-center font-pixel mb-12">
-              Multimodal Chatbot
-            </h1>
-            <div className="flex flex-col items-center mb-10">
-              <p className="text-2xl text-center font-mono flex items-center mb-3">
-                See • Hear • Understand <BlinkingCursor />
-              </p>
-              <p className="text-lg text-center font-mono text-gray-300 max-w-lg">
-                Your retro-styled AI assistant that can process images, audio,
-                code and text all at once
-              </p>
-            </div>
           </header>
           <main>{children}</main>
           <footer className="py-12 text-center font-mono">
