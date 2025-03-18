@@ -1,99 +1,120 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { motion, AnimatePresence } from "framer-motion"
-import { Search, Send, BarChart2, Globe, Video, PlaneTakeoff, AudioLines } from "lucide-react"
-import useDebounce from "@/hooks/use-debounce"
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Send,
+  Image,
+  Mic,
+  Video,
+  FileCode,
+  Upload,
+} from "lucide-react";
+import useDebounce from "@/hooks/use-debounce";
+import { FileUploadDemo } from "@/app/components/fileupload";
+import { useRouter } from "next/navigation";
 
 interface Action {
-  id: string
-  label: string
-  icon: React.ReactNode
-  description?: string
-  short?: string
-  end?: string
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  description?: string;
+  short?: string;
+  end?: string;
 }
 
 interface SearchResult {
-  actions: Action[]
+  actions: Action[];
 }
 
 const allActions = [
   {
     id: "1",
-    label: "Book tickets",
-    icon: <PlaneTakeoff className="h-4 w-4 text-blue-500" />,
-    description: "Operator",
-    short: "⌘K",
-    end: "Agent",
+    label: "Analyze Image",
+    icon: <Image className="h-5 w-5 text-blue-500" />,
+    description: "Visual AI",
+    short: "⌘I",
+    end: "Vision",
   },
   {
     id: "2",
-    label: "Summarize",
-    icon: <BarChart2 className="h-4 w-4 text-orange-500" />,
-    description: "gpt-4o",
-    short: "⌘cmd+p",
-    end: "Command",
+    label: "Process Audio",
+    icon: <Mic className="h-5 w-5 text-orange-500" />,
+    description: "Speech AI",
+    short: "⌘A",
+    end: "Audio",
   },
   {
     id: "3",
-    label: "Screen Studio",
-    icon: <Video className="h-4 w-4 text-purple-500" />,
-    description: "gpt-4o",
-    short: "",
-    end: "Application",
+    label: "Video Analysis",
+    icon: <Video className="h-5 w-5 text-purple-500" />,
+    description: "Motion AI",
+    short: "⌘V",
+    end: "Visual",
   },
   {
     id: "4",
-    label: "Talk to Jarvis",
-    icon: <AudioLines className="h-4 w-4 text-green-500" />,
-    description: "gpt-4o voice",
-    short: "",
+    label: "Code Interpreter",
+    icon: <FileCode className="h-5 w-5 text-green-500" />,
+    description: "Code AI",
+    short: "⌘C",
     end: "Active",
   },
-  {
-    id: "5",
-    label: "Translate",
-    icon: <Globe className="h-4 w-4 text-blue-500" />,
-    description: "gpt-4o",
-    short: "",
-    end: "Command",
-  },
-]
+];
 
 function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
-  const [query, setQuery] = useState("")
-  const [result, setResult] = useState<SearchResult | null>(null)
-  const [isFocused, setIsFocused] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
-  const [selectedAction, setSelectedAction] = useState<Action | null>(null)
-  const debouncedQuery = useDebounce(query, 200)
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const debouncedQuery = useDebounce(query, 200);
 
   useEffect(() => {
     if (!isFocused) {
-      setResult(null)
-      return
+      setResult(null);
+      return;
     }
 
     if (!debouncedQuery) {
-      setResult({ actions: allActions })
-      return
+      setResult({ actions: allActions });
+      return;
     }
 
-    const normalizedQuery = debouncedQuery.toLowerCase().trim()
+    const normalizedQuery = debouncedQuery.toLowerCase().trim();
     const filteredActions = allActions.filter((action) => {
-      const searchableText = action.label.toLowerCase()
-      return searchableText.includes(normalizedQuery)
-    })
+      const searchableText = action.label.toLowerCase();
+      return searchableText.includes(normalizedQuery);
+    });
 
-    setResult({ actions: filteredActions })
-  }, [debouncedQuery, isFocused])
+    setResult({ actions: filteredActions });
+  }, [debouncedQuery, isFocused]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value)
-    setIsTyping(true)
-  }
+    setQuery(e.target.value);
+    setIsTyping(true);
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!query.trim()) return;
+
+    router.push(`/chatbot?q=${encodeURIComponent(query)}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSubmit();
+    }
+  };
+
+  const toggleFileUpload = () => {
+    setShowFileUpload((prev) => !prev);
+  };
 
   const container = {
     hidden: { opacity: 0, height: 0 },
@@ -119,7 +140,7 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
         },
       },
     },
-  }
+  };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
@@ -137,32 +158,53 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
         duration: 0.2,
       },
     },
-  }
+  };
 
   // Reset selectedAction when focusing the input
   const handleFocus = () => {
-    setSelectedAction(null)
-    setIsFocused(true)
-  }
+    setSelectedAction(null);
+    setIsFocused(true);
+  };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto">
       <div className="relative flex flex-col justify-start items-center min-h-[300px]">
-        <div className="w-full max-w-sm sticky top-0 bg-background z-10 pt-4 pb-1">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block" htmlFor="search">
-            Search Commands
-          </label>
-          <div className="relative">
+        <div className="w-full max-w-xl sticky top-0 bg-background z-10 pt-4 pb-1">
+          <div className="flex justify-between items-center mb-2">
+            <label
+              className="text-base font-medium text-gray-400 dark:text-gray-300 block"
+              htmlFor="search"
+            >
+              Ask or Upload Files
+            </label>
+            <button
+              onClick={toggleFileUpload}
+              className={`text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                showFileUpload
+                  ? "bg-green-600 text-black font-bold"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+              aria-label="Toggle file upload"
+            >
+              <Upload className="h-4 w-4 inline mr-2" />
+              {showFileUpload ? "Hide Upload" : "Upload Media"}
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="relative">
             <Input
               type="text"
-              placeholder="What's up?"
+              placeholder="Ask me anything or upload images, audio, video..."
               value={query}
               onChange={handleInputChange}
               onFocus={handleFocus}
               onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-              className="pl-3 pr-9 py-1.5 h-9 text-sm rounded-lg focus-visible:ring-offset-0"
+              onKeyDown={handleKeyDown}
+              className="pl-4 pr-10 py-2 h-12 text-base rounded-lg focus-visible:ring-offset-0"
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4">
+            <button
+              type="submit"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 cursor-pointer"
+            >
               <AnimatePresence mode="popLayout">
                 {query.length > 0 ? (
                   <motion.div
@@ -172,7 +214,7 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
                     exit={{ y: 20, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Send className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <Send className="w-6 h-6 text-green-500" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -182,13 +224,27 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
                     exit={{ y: 20, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <Search className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-          </div>
+            </button>
+          </form>
         </div>
+
+        <AnimatePresence>
+          {showFileUpload && (
+            <motion.div
+              className="w-full mt-6 mb-8"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <FileUploadDemo />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="w-full max-w-sm">
           <AnimatePresence>
@@ -204,21 +260,33 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
                   {result.actions.map((action) => (
                     <motion.li
                       key={action.id}
-                      className="px-3 py-2 flex items-center justify-between hover:bg-gray-200 dark:hover:bg-zinc-900  cursor-pointer rounded-md"
+                      className="px-3 py-2 flex items-center justify-between hover:bg-gray-200 dark:hover:bg-zinc-900 cursor-pointer rounded-md"
                       variants={item}
                       layout
-                      onClick={() => setSelectedAction(action)}
+                      onClick={() => {
+                        setSelectedAction(action);
+                        setQuery(action.label);
+                        setTimeout(() => handleSubmit(), 300);
+                      }}
                     >
                       <div className="flex items-center gap-2 justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-500">{action.icon}</span>
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{action.label}</span>
-                          <span className="text-xs text-gray-400">{action.description}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {action.label}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {action.description}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">{action.short}</span>
-                        <span className="text-xs text-gray-400 text-right">{action.end}</span>
+                        <span className="text-xs text-gray-400">
+                          {action.short}
+                        </span>
+                        <span className="text-xs text-gray-400 text-right">
+                          {action.end}
+                        </span>
                       </div>
                     </motion.li>
                   ))}
@@ -235,8 +303,7 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default ActionSearchBar
-
+export default ActionSearchBar;

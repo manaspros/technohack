@@ -10,6 +10,9 @@
   --accent-color: 139, 92, 246;
   --header-color: 34, 211, 238;
   --border-color: 74, 222, 128;
+  /* For glowing effect */
+  --black: #000;
+  --white: #fff;
 }
 
 .light-theme {
@@ -21,6 +24,26 @@
   --border-color: 4, 120, 87;
 }
 
+/* Support for rounded xl values */
+@layer utilities {
+  .rounded-2\.5xl {
+    border-radius: 1.25rem;
+  }
+  .border-0\.75 {
+    border-width: 0.75px;
+  }
+  .-tracking-4 {
+    letter-spacing: -0.04em;
+  }
+}
+
+/* Ensure text-balance is supported */
+@supports (text-wrap: balance) {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -30,17 +53,20 @@ body {
     )
     rgb(var(--background-start-rgb));
   transition: background-color 0.3s, color 0.3s;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .font-pixel {
   font-family: var(--font-press-start-2p);
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 3px 3px 0 #000;
   letter-spacing: -1px;
   color: rgb(var(--header-color));
 }
 
 .font-mono {
   font-family: var(--font-vt323);
+  font-size: 1.1em;
 }
 
 /* Pixelated border effect */
@@ -104,4 +130,21 @@ body {
   html {
     scroll-behavior: smooth;
   }
+}
+
+/* Text size overrides for better readability */
+h1 {
+  font-size: 3.5rem;
+}
+
+h2 {
+  font-size: 2.5rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+p {
+  font-size: 1.125rem;
 }

@@ -673,10 +673,10 @@ export default function ChatbotPage() {
               </div>
               <div className="w-full">
                 {message.sender === "user" ? (
-                  <p className="font-mono text-sm">{message.text}</p>
+                  <p className="font-mono text-xl">{message.text}</p>
                 ) : (
                   <div
-                    className="font-mono text-sm list-content"
+                    className="font-mono text-xl list-content"
                     dangerouslySetInnerHTML={{
                       __html: formatBotMessage(
                         message.text,
