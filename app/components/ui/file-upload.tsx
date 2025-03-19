@@ -3,7 +3,15 @@ import React, { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
-import { Camera, FileCode, Headphones, Video, File, X } from "lucide-react";
+import {
+  Camera,
+  FileCode,
+  Headphones,
+  Video,
+  File,
+  X,
+  Upload,
+} from "lucide-react";
 
 const mainVariant = {
   initial: {
@@ -32,6 +40,7 @@ interface FileUploadProps {
 
 export const FileUpload = ({ onChange }: FileUploadProps) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
@@ -69,6 +78,10 @@ export const FileUpload = ({ onChange }: FileUploadProps) => {
     multiple: true,
     noClick: true,
     onDrop: handleFileChange,
+    onDragEnter: () => setIsDragging(true),
+    onDragLeave: () => setIsDragging(false),
+    onDropAccepted: () => setIsDragging(false),
+    onDropRejected: () => setIsDragging(false),
     accept: {
       "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
       "audio/*": [".mp3", ".wav", ".ogg", ".m4a"],
@@ -83,7 +96,10 @@ export const FileUpload = ({ onChange }: FileUploadProps) => {
       <motion.div
         onClick={handleClick}
         whileHover="animate"
-        className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
+        className={cn(
+          "p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden",
+          isDragging && "bg-green-500/10"
+        )}
       >
         <input
           ref={fileInputRef}
@@ -97,11 +113,33 @@ export const FileUpload = ({ onChange }: FileUploadProps) => {
           <GridPattern />
         </div>
         <div className="flex flex-col items-center justify-center py-10">
+          <motion.div
+            className="relative mb-6 w-16 h-16 border-2 border-dashed border-green-500/50 rounded-full flex items-center justify-center"
+            animate={{
+              boxShadow: isDragging
+                ? "0 0 0 4px rgba(74, 222, 128, 0.3)"
+                : "0 0 0 0px rgba(74, 222, 128, 0)",
+            }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              animate={{
+                rotate: isDragActive ? 180 : 0,
+                scale: isDragActive ? 1.1 : 1,
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <Upload className="w-8 h-8 text-green-500" />
+            </motion.div>
+          </motion.div>
+
           <p className="relative z-20 font-pixel text-2xl text-green-400 mb-4">
-            Multimodal Upload
+            {isDragActive ? "Drop Files Here" : "Multimodal Upload"}
           </p>
           <p className="relative z-20 font-mono text-lg text-gray-300 dark:text-gray-300 mt-2 mb-6 text-center">
-            Drag or drop files here to analyze with AI
+            {isDragActive
+              ? "Release to upload files for AI analysis"
+              : "Drag or drop files here to analyze with AI"}
           </p>
           <p className="relative z-20 font-mono text-sm text-gray-400 dark:text-gray-400 text-center max-w-md mx-auto">
             Supports images, audio, video, text, code, and documents
@@ -114,80 +152,17 @@ export const FileUpload = ({ onChange }: FileUploadProps) => {
             <FileTypeOption icon={<FileCode />} label="Code" />
           </div>
 
-          <div className="relative w-full mt-12 max-w-3xl mx-auto">
-            {files.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                {files.map((file, idx) => (
-                  <motion.div
-                    key={"file" + idx}
-                    layoutId={idx === 0 ? "file-upload" : "file-upload-" + idx}
-                    className={cn(
-                      "relative overflow-hidden z-40 bg-gray-800 dark:bg-gray-800/60 border border-gray-700 flex flex-col items-start justify-start p-4 mx-auto rounded-md",
-                      "backdrop-blur-sm"
-                    )}
-                  >
-                    <div className="flex justify-between w-full items-center gap-4">
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(file.type)}
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          layout
-                          className="text-base text-gray-300 dark:text-gray-300 truncate max-w-[180px]"
-                        >
-                          {file.name}
-                        </motion.p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          layout
-                          className="rounded-lg px-2 py-1 w-fit shrink-0 text-sm bg-gray-900/70 text-gray-400"
-                        >
-                          {(file.size / (1024 * 1024)).toFixed(2)} MB
-                        </motion.p>
-                        <button
-                          onClick={() => handleRemoveFile(file.name)}
-                          className="text-gray-500 hover:text-red-500 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <motion.div
-                layoutId="file-upload"
-                variants={mainVariant}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20,
-                }}
-                className={cn(
-                  "relative group-hover/file:shadow-2xl z-40 bg-gray-800 dark:bg-gray-800/60 border-2 border-dashed border-gray-700 flex items-center justify-center h-40 mt-4 w-full max-w-xs mx-auto rounded-lg",
-                  "backdrop-blur-sm"
-                )}
-              >
-                {isDragActive ? (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-green-400 flex flex-col items-center font-mono text-xl"
-                  >
-                    Drop files here
-                    <IconUpload className="h-8 w-8 text-green-400 mt-2" />
-                  </motion.p>
-                ) : (
-                  <IconUpload className="h-10 w-10 text-gray-500 dark:text-gray-400" />
-                )}
-              </motion.div>
-            )}
-          </div>
+          {/* No longer showing files here - moved to the success state component */}
         </div>
+
+        {isDragging && (
+          <motion.div
+            className="absolute inset-0 border-2 border-dashed border-green-500 bg-green-500/5 rounded-lg z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
       </motion.div>
     </div>
   );
@@ -235,3 +210,4 @@ export function GridPattern() {
     </div>
   );
 }
+// This function is no longer needed as we're using the string.includes() method

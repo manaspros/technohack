@@ -3,15 +3,110 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import ActionSearchBar from "../components/kokonutui/action-search-bar";
-import { Code, Camera, Headphones, Zap, FilmIcon } from "lucide-react";
+import {
+  Code,
+  Camera,
+  Headphones,
+  Zap,
+  FilmIcon,
+  Search,
+  Upload,
+  LayoutGrid,
+  X,
+  Sparkles,
+  MessageSquare,
+  Award,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import HeroHighlightDemo from "@/components/hero-highlight-demo";
 import PixelLoader from "@/components/ui/pixel-loader";
 
+// Define tutorial steps
+const tutorialSteps = [
+  {
+    id: "basics",
+    title: "Quick Tutorial",
+    tips: [
+      {
+        icon: <Search className="h-4 w-4 text-green-400" />,
+        text: "Ask questions or upload files using the search bar",
+      },
+      {
+        icon: <Upload className="h-4 w-4 text-green-400" />,
+        text: "Upload images, audio, or code for analysis",
+      },
+      {
+        icon: <LayoutGrid className="h-4 w-4 text-green-400" />,
+        text: "Explore example capabilities below",
+      },
+    ],
+  },
+  {
+    id: "multimodal",
+    title: "Multimodal AI",
+    tips: [
+      {
+        icon: <Camera className="h-4 w-4 text-green-400" />,
+        text: "Upload images for visual analysis and understanding",
+      },
+      {
+        icon: <Headphones className="h-4 w-4 text-green-400" />,
+        text: "Process audio files for transcription and analysis",
+      },
+      {
+        icon: <Code className="h-4 w-4 text-green-400" />,
+        text: "Share code for review and improvement suggestions",
+      },
+    ],
+  },
+  {
+    id: "achievements",
+    title: "Achievements",
+    tips: [
+      {
+        icon: <Award className="h-4 w-4 text-green-400" />,
+        text: "Earn achievements by using different features",
+      },
+      {
+        icon: <MessageSquare className="h-4 w-4 text-green-400" />,
+        text: "Send messages to the AI to unlock communication badges",
+      },
+      {
+        icon: <Sparkles className="h-4 w-4 text-green-400" />,
+        text: "Click the trophy icon to view your achievements",
+      },
+    ],
+  },
+];
+
 export default function Home() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [currentTutorialIndex, setCurrentTutorialIndex] = useState(0);
+
+  // Store tutorial preference in localStorage
+  useEffect(() => {
+    // Check if user has previously hidden the tutorial
+    const tutorialHidden = localStorage.getItem("tutorialHidden") === "true";
+    if (tutorialHidden) {
+      setShowTutorial(false);
+    }
+  }, []);
+
+  const hideTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem("tutorialHidden", "true");
+  };
+
+  const goToNextTip = () => {
+    if (currentTutorialIndex < tutorialSteps.length - 1) {
+      setCurrentTutorialIndex(currentTutorialIndex + 1);
+    } else {
+      setCurrentTutorialIndex(0); // Loop back to the first tip
+    }
+  };
 
   useEffect(() => {
     // Simulate loading time to show the loader
@@ -60,6 +155,8 @@ export default function Home() {
       </div>
     );
   }
+
+  const currentTutorialStep = tutorialSteps[currentTutorialIndex];
 
   return (
     <div className="space-y-6">
@@ -125,6 +222,65 @@ export default function Home() {
           </div>
         </motion.div>
       </div>
+
+      {showTutorial && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-4 left-4 max-w-md bg-gray-800 border-2 border-green-500 p-4 rounded-lg shadow-lg z-40"
+          key={`tutorial-${currentTutorialIndex}`}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-pixel text-green-400">
+              {currentTutorialStep.title}
+            </h3>
+            <button
+              onClick={hideTutorial}
+              className="text-gray-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-2 mb-4">
+            {currentTutorialStep.tips.map((tip, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="bg-gray-700 p-2 rounded-full">{tip.icon}</div>
+                <p className="text-sm text-gray-200 font-mono">{tip.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between">
+            <button
+              onClick={hideTutorial}
+              className="text-xs text-gray-400 hover:text-white font-mono"
+            >
+              Don't show again
+            </button>
+            <button
+              onClick={goToNextTip}
+              className="bg-green-600 text-black px-3 py-1 rounded text-xs font-pixel"
+            >
+              Next Tip →
+            </button>
+          </div>
+
+          {/* Tutorial progress indicator */}
+          <div className="flex justify-center gap-1 mt-3">
+            {tutorialSteps.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === currentTutorialIndex
+                    ? "bg-green-500"
+                    : "bg-gray-600"
+                }`}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

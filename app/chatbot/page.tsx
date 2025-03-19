@@ -6,6 +6,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { MessageSquareText, Bot, User, Upload, Loader } from "lucide-react";
 import { FileUploadDemo } from "@/app/components/fileupload";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
+import {
+  useAchievements,
+  AchievementPanel,
+} from "@/components/ui/achievement-notification";
 
 export default function ChatbotPage() {
   const [inputValue, setInputValue] = useState("");
@@ -26,6 +30,8 @@ export default function ChatbotPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
+  const { unlockAchievement } = useAchievements();
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   // Function to ensure loading is shown for at least 1 second
   const ensureMinimumLoadingTime = (callback: () => void) => {
@@ -62,6 +68,12 @@ export default function ChatbotPage() {
     setIsLoading(true);
     setLoadingStartTime(Date.now());
 
+    // Check for first message achievement
+    if (!hasSentFirstMessage) {
+      unlockAchievement("first_chat");
+      setHasSentFirstMessage(true);
+    }
+
     // Simulate AI response
     setTimeout(() => {
       const responses = [
@@ -92,6 +104,11 @@ export default function ChatbotPage() {
 
   const toggleFileUpload = () => {
     setShowFileUpload((prev) => !prev);
+  };
+
+  const handleFileUpload = () => {
+    // This would be triggered when a file is actually uploaded
+    unlockAchievement("upload_image");
   };
 
   const placeholders = [
@@ -221,6 +238,9 @@ export default function ChatbotPage() {
           placeholderClassName="text-base md:text-lg"
         />
       </div>
+
+      {/* Add the achievement panel component */}
+      <AchievementPanel />
     </div>
   );
 }
