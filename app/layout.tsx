@@ -2,12 +2,12 @@ import "./globals.css";
 import { Press_Start_2P, VT323 } from "next/font/google";
 import type React from "react";
 import ColorfulPixelLogo from "./components/ColorfulPixelLogo";
-import BlinkingCursor from "./components/BlinkingCursor";
 import FloatingPixels from "./components/FloatingPixels";
 import NavMenu from "./components/NavMenu";
-import ThemeToggle from "./components/ThemeToggle";
+import NavigationButton from "@/components/NavigationButton";
 import SoundEffect from "./components/SoundEffect";
 import PixelatedBackground from "./components/PixelatedBackground";
+import GlobalCursor from "@/components/ui/global-cursor";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -34,12 +34,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="cursor-none">
       <body
-        className={`${pressStart2P.variable} ${vt323.variable} font-sans bg-gray-900 text-green-400 dark:bg-gray-900 dark:text-green-400`}
+        className={`${pressStart2P.variable} ${vt323.variable} font-sans bg-gray-900 text-green-400 dark:bg-gray-900 dark:text-green-400 cursor-none`}
       >
+        <GlobalCursor />
         <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
+          <NavigationButton />
         </div>
         <PixelatedBackground />
         <div className="max-w-5xl mx-auto px-4">

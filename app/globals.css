@@ -57,13 +57,37 @@
   0% {
     background-position: 0 0;
   }
+  20% {
+    background-position: 20% 0;
+  }
+  20.1% {
+    background-position: 40% 0;
+  }
+  40% {
+    background-position: 40% 0;
+  }
+  40.1% {
+    background-position: 60% 0;
+  }
+  60% {
+    background-position: 60% 0;
+  }
+  60.1% {
+    background-position: 80% 0;
+  }
+  80% {
+    background-position: 80% 0;
+  }
+  80.1% {
+    background-position: 100% 0;
+  }
   100% {
-    background-position: 0 100%;
+    background-position: 100% 0;
   }
 }
 
 .animate-pixel-scan {
-  animation: pixel-scan 2s steps(20) infinite;
+  animation: pixel-scan 2s linear forwards;
 }
 
 body {
@@ -145,6 +169,17 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: #10b981 #222222;
+  cursor: none !important;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
+  cursor: none !important;
 }
 
 /* For devices that support it, add smooth scrolling */
@@ -169,4 +204,11 @@ h3 {
 
 p {
   font-size: 1.125rem;
+}
+
+/* Pixelated text effect */
+.text-pixelated {
+  image-rendering: pixelated;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
 }

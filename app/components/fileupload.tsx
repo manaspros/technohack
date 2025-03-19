@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FileUpload } from "./ui/file-upload";
 import { motion } from "framer-motion";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
+import { Loader } from "lucide-react";
 
 export function FileUploadDemo() {
   interface UploadedFile {
@@ -14,16 +15,38 @@ export function FileUploadDemo() {
 
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [processingStartTime, setProcessingStartTime] = useState<number | null>(
+    null
+  );
+
+  // Function to ensure loading is shown for at least 1.5 seconds
+  const ensureMinimumLoadingTime = (callback: () => void) => {
+    const currentTime = Date.now();
+    const elapsedTime = processingStartTime
+      ? currentTime - processingStartTime
+      : 0;
+    const remainingTime = Math.max(0, 1500 - elapsedTime);
+
+    setTimeout(callback, remainingTime);
+  };
 
   const handleFileUpload = (files: UploadedFile[]): void => {
     setFiles(files);
+
     if (files.length > 0) {
-      // Simulate processing time
-      setTimeout(() => {
-        setUploadComplete(true);
-      }, 1500);
+      // Record processing start time
+      setProcessingStartTime(Date.now());
+      setUploadComplete(true);
     }
   };
+
+  // Reset the demo when files are removed
+  useEffect(() => {
+    if (files.length === 0 && uploadComplete) {
+      setUploadComplete(false);
+      setProcessingStartTime(null);
+    }
+  }, [files, uploadComplete]);
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -53,18 +76,13 @@ export function FileUploadDemo() {
           <h3 className="text-xl font-pixel mb-3 text-green-400">
             Processing Files
           </h3>
-          <p className="font-mono text-lg">
+          <p className="font-mono text-lg mb-4">
             Your multimodal AI is analyzing the content...
           </p>
-          <div className="mt-4 flex justify-center">
-            <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-green-400 to-blue-500"
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 3, ease: "easeInOut" }}
-              />
-            </div>
+
+          <div className="flex items-center justify-center gap-3 text-green-400 font-mono">
+            <Loader className="h-5 w-5 animate-spin" />
+            <span>Analyzing data points...</span>
           </div>
         </motion.div>
       )}

@@ -1,14 +1,26 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import ActionSearchBar from "../components/kokonutui/action-search-bar";
 import { Code, Camera, Headphones, Zap, FilmIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import HeroHighlightDemo from "@/components/hero-highlight-demo";
+import PixelLoader from "@/components/ui/pixel-loader";
 
 export default function Home() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time to show the loader
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleExampleClick = (query: string) => {
     router.push(`/chatbot?q=${encodeURIComponent(query)}`);
@@ -41,28 +53,36 @@ export default function Home() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <PixelLoader size="large" text="Initializing AI" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Hero highlight section */}
-      <section className="mt-0 mb-8 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
+      <section className="mt-0 mb-6 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 xl:-mx-16">
         <HeroHighlightDemo />
       </section>
 
-      <section className="mt-0 mb-16">
-        <h2 className="text-2xl font-bold font-pixel mb-6 text-center">
+      <section className="mt-0 mb-10">
+        <h2 className="text-2xl font-bold font-pixel mb-4 text-center">
           Ask, Upload or Record Anything
         </h2>
         <ActionSearchBar />
       </section>
 
-      <div className="min-h-[40vh] flex flex-col items-center justify-start gap-10">
+      <div className="min-h-[40vh] flex flex-col items-center justify-start gap-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           className="w-full"
         >
-          <h3 className="font-pixel text-2xl text-center mb-8">
+          <h3 className="font-pixel text-2xl text-center mb-6">
             Try interacting with...
           </h3>
 

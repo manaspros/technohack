@@ -114,30 +114,36 @@ export const Highlight = ({
   children: React.ReactNode;
   className?: string;
 }) => {
+  // Using a different animation approach to achieve a similar pixelated effect
+  const [isAnimating, setIsAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    // Start animation after a delay
+    const timer = setTimeout(() => {
+      setIsAnimating(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <motion.span
-      initial={{
-        backgroundSize: "0% 100%",
-      }}
-      animate={{
-        backgroundSize: "100% 100%",
-      }}
-      transition={{
-        duration: 2,
-        ease: "steps(20)",
-        delay: 0.5,
-      }}
-      style={{
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "left center",
-        display: "inline",
-      }}
+    <span
       className={cn(
-        `relative inline-block rounded-lg bg-gradient-to-r from-green-400 to-blue-400 px-2 pb-1 dark:from-green-500 dark:to-blue-500 font-pixel`,
+        `relative inline-block rounded-lg px-2 pb-1 font-pixel overflow-hidden`,
         className
       )}
     >
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-400 dark:from-green-500 dark:to-blue-500 -z-10"
+        initial={{ width: "0%" }}
+        animate={{ width: isAnimating ? "100%" : "0%" }}
+        transition={{
+          duration: 2,
+          ease: [0, 0.5, 0.5, 1], // Custom easing for step-like effect
+          times: [0, 0.2, 0.5, 1],
+        }}
+      />
       {children}
-    </motion.span>
+    </span>
   );
 };
