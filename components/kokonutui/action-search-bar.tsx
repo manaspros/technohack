@@ -187,13 +187,6 @@ function ActionSearchBar({
       <div className="relative flex flex-col justify-start items-center">
         <div className="w-full sticky top-0 bg-background z-10 pt-2 pb-1">
           <div className="flex justify-between items-center mb-2">
-            <label
-              className="text-base font-medium text-gray-400 dark:text-gray-300 block"
-              htmlFor="search"
-            >
-              Ask or Upload Files
-            </label>
-            {/* Only show upload button when showFileUploadButton is true */}
             {showFileUploadButton && (
               <button
                 onClick={toggleFileUpload}
