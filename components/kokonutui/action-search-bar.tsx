@@ -65,7 +65,17 @@ const searchPlaceholders = [
   "What's the best way to process video content?",
 ];
 
-function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
+interface ActionSearchBarProps {
+  actions?: Action[];
+  showFileUploadButton?: boolean;
+  showFileUpload?: boolean;
+}
+
+function ActionSearchBar({
+  actions = allActions,
+  showFileUploadButton = true,
+  showFileUpload: externalShowFileUpload,
+}: ActionSearchBarProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -74,6 +84,12 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const debouncedQuery = useDebounce(query, 200);
+
+  // Use external state if provided, otherwise use local state
+  const displayFileUpload =
+    externalShowFileUpload !== undefined
+      ? externalShowFileUpload
+      : showFileUpload;
 
   useEffect(() => {
     if (!isFocused) {
@@ -177,18 +193,21 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
             >
               Ask or Upload Files
             </label>
-            <button
-              onClick={toggleFileUpload}
-              className={`text-sm font-medium px-3 py-2 rounded-md transition-colors ${
-                showFileUpload
-                  ? "bg-green-600 text-black font-bold"
-                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-              }`}
-              aria-label="Toggle file upload"
-            >
-              <Upload className="h-4 w-4 inline mr-2" />
-              {showFileUpload ? "Hide Upload" : "Upload Media"}
-            </button>
+            {/* Only show upload button when showFileUploadButton is true */}
+            {showFileUploadButton && (
+              <button
+                onClick={toggleFileUpload}
+                className={`text-sm font-medium px-3 py-2 rounded-md transition-colors ${
+                  displayFileUpload
+                    ? "bg-green-600 text-black font-bold"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+                aria-label="Toggle file upload"
+              >
+                <Upload className="h-4 w-4 inline mr-2" />
+                {displayFileUpload ? "Hide Upload" : "Upload Media"}
+              </button>
+            )}
           </div>
 
           {/* Replace the regular input with the vanishing input */}
@@ -260,7 +279,7 @@ function ActionSearchBar({ actions = allActions }: { actions?: Action[] }) {
         </div>
 
         <AnimatePresence>
-          {showFileUpload && (
+          {displayFileUpload && (
             <motion.div
               className="w-full mt-3 mb-0"
               initial={{ opacity: 0, height: 0 }}

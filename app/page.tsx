@@ -10,17 +10,18 @@ import {
   Zap,
   FilmIcon,
   Search,
-  Upload,
-  LayoutGrid,
   X,
   Sparkles,
   MessageSquare,
   Award,
+  Upload,
+  LayoutGrid,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import HeroHighlightDemo from "@/components/hero-highlight-demo";
 import PixelLoader from "@/components/ui/pixel-loader";
+import { RetroControlPanel } from "@/components/ui/retro-control-panel";
 
 // Define tutorial steps
 const tutorialSteps = [
@@ -85,6 +86,14 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [showTutorial, setShowTutorial] = useState(true);
   const [currentTutorialIndex, setCurrentTutorialIndex] = useState(0);
+  const [controlsExpanded, setControlsExpanded] = useState(true);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+
+  // Settings state - remove sound
+  const [settings, setSettings] = useState({
+    memory: true,
+    webSearch: false,
+  });
 
   // Store tutorial preference in localStorage
   useEffect(() => {
@@ -119,6 +128,19 @@ export default function Home() {
 
   const handleExampleClick = (query: string) => {
     router.push(`/chatbot?q=${encodeURIComponent(query)}`);
+  };
+
+  // Handle control panel option changes
+  const handleOptionChange = (id: string, isActive: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      [id]: isActive,
+    }));
+  };
+
+  // Toggle file upload
+  const toggleFileUpload = () => {
+    setShowFileUpload((prev) => !prev);
   };
 
   const examples = [
@@ -165,11 +187,26 @@ export default function Home() {
         <HeroHighlightDemo />
       </section>
 
-      <section className="mt-0 mb-10">
+      <section className="mt-0 mb-4">
         <h2 className="text-2xl font-bold font-pixel mb-4 text-center">
           Ask, Upload or Record Anything
         </h2>
-        <ActionSearchBar />
+
+        {/* Add RetroControlPanel above ActionSearchBar */}
+        <div className="max-w-3xl mx-auto px-4">
+          <RetroControlPanel
+            expanded={controlsExpanded}
+            onToggleExpanded={() => setControlsExpanded(!controlsExpanded)}
+            onOptionChange={handleOptionChange}
+            onFileOpen={toggleFileUpload}
+            activeOptions={settings}
+          />
+        </div>
+
+        <ActionSearchBar
+          showFileUploadButton={false}
+          showFileUpload={showFileUpload}
+        />
       </section>
 
       <div className="min-h-[40vh] flex flex-col items-center justify-start gap-6">
