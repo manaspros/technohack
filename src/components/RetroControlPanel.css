@@ -1,0 +1,113 @@
+.retro-control-panel {
+  background-color: #202020;
+  border: 3px solid #00ff00;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  margin-bottom: 15px;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #000000;
+  cursor: pointer;
+  border-bottom: 1px solid #00ff00;
+}
+
+.panel-title {
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.panel-toggle {
+  font-weight: bold;
+}
+
+.panel-content {
+  padding: 12px;
+}
+
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 1px solid #00ff00;
+  background-color: #101010;
+}
+
+.control-label {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.toggle-button {
+  background-color: #000000;
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  padding: 5px 15px;
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-button.active {
+  background-color: #000000;
+  color: #00ff00;
+  border-color: #00ff00;
+}
+
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.session-info {
+  margin-top: 15px;
+  text-align: center;
+  padding: 5px;
+  border: 1px dashed #00ff00;
+}
+
+.session-active {
+  color: #00ff00;
+  font-weight: bold;
+}
+
+.session-inactive {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+.error-message {
+  margin-top: 10px;
+  padding: 5px;
+  background-color: #300;
+  border: 1px solid #f00;
+  color: #f00;
+  font-size: 12px;
+}
+
+.loading-indicator {
+  margin-top: 10px;
+  text-align: center;
+  color: cyan;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
