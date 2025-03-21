@@ -9,6 +9,8 @@ import SoundEffect from "./components/SoundEffect";
 import PixelatedBackground from "./components/PixelatedBackground";
 import GlobalCursor from "@/components/ui/global-cursor";
 import { AchievementProvider } from "@/components/ui/achievement-notification";
+import BootSequence from "@/components/ui/boot-sequence";
+import CrtEffect from "@/components/ui/crt-effect";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -39,6 +41,12 @@ export default function RootLayout({
       <body
         className={`${pressStart2P.variable} ${vt323.variable} font-sans bg-gray-900 text-green-400 dark:bg-gray-900 dark:text-green-400 cursor-none`}
       >
+        {/* Boot sequence animation */}
+        <BootSequence />
+
+        {/* CRT screen effect */}
+        <CrtEffect />
+
         <AchievementProvider>
           <GlobalCursor />
           <div className="fixed top-4 right-4 z-50">

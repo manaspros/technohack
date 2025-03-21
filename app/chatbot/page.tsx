@@ -7,7 +7,6 @@ import {
   MessageSquareText,
   Bot,
   User,
-  Loader,
   ChevronUp,
   Mic,
   BrainCircuit,
@@ -24,6 +23,7 @@ import {
   RetroControlPanel,
   RetroVoiceButton,
 } from "@/components/ui/retro-control-panel";
+import { PixelSpinner } from "@/components/ui/pixel-spinner";
 
 export default function ChatbotPage() {
   const [inputValue, setInputValue] = useState("");
@@ -451,7 +451,7 @@ export default function ChatbotPage() {
             </motion.div>
           ))}
 
-          {/* Show loading indicator only when waiting for a response */}
+          {/* Show loading indicator only when waiting for a response - updated with PixelSpinner */}
           {isLoading && (
             <motion.div
               key="loading-indicator"
@@ -466,7 +466,7 @@ export default function ChatbotPage() {
                 </div>
                 <div className="py-2 px-3 md:py-2 md:px-4 rounded-xl bg-gray-800">
                   <div className="flex items-center space-x-2 text-green-400">
-                    <Loader className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                    <PixelSpinner type="scan" size="sm" color="#4ade80" />
                     <span className="text-sm md:text-base">
                       Processing response...
                     </span>

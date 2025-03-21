@@ -170,14 +170,6 @@ export default function Home() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <PixelLoader size="large" text="Initializing AI" />
-      </div>
-    );
-  }
-
   const currentTutorialStep = tutorialSteps[currentTutorialIndex];
 
   return (

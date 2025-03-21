@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -246,6 +246,37 @@ function RetroToggle({
   onMouseLeave,
   tooltipText,
 }: RetroToggleProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const lastActiveState = useRef(isActive);
+
+  // Apply electronic transition effect when state changes
+  React.useEffect(() => {
+    if (!buttonRef.current) return;
+
+    // Skip on initial render
+    if (lastActiveState.current !== isActive) {
+      const button = buttonRef.current;
+
+      // Remove existing animation classes
+      button.classList.remove(
+        "electronic-transition-on",
+        "electronic-transition-off"
+      );
+
+      // Force browser to recognize the change before adding new animation
+      void button.offsetWidth;
+
+      // Add appropriate animation class
+      if (isActive) {
+        button.classList.add("electronic-transition-on");
+      } else {
+        button.classList.add("electronic-transition-off");
+      }
+    }
+
+    lastActiveState.current = isActive;
+  }, [isActive]);
+
   return (
     <div
       className="group flex flex-col items-center justify-center relative"
@@ -253,6 +284,7 @@ function RetroToggle({
       onMouseLeave={onMouseLeave}
     >
       <button
+        ref={buttonRef}
         className={cn(
           "flex flex-col items-center justify-center w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-md transition-colors",
           isActive
