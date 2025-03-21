@@ -24,6 +24,17 @@ import {
   RetroVoiceButton,
 } from "@/components/ui/retro-control-panel";
 import { PixelSpinner } from "@/components/ui/pixel-spinner";
+import chatApi from "../../src/services/api";
+import { cn } from "@/lib/utils";
+
+/**
+ * Filters out <think>...</think> sections from text
+ * These sections contain the AI's internal reasoning process
+ */
+const filterThinkingSections = (text: string): string => {
+  // Use regex to remove all <think>...</think> blocks, including newlines within them
+  return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+};
 
 export default function ChatbotPage() {
   const [inputValue, setInputValue] = useState("");
@@ -50,11 +61,20 @@ export default function ChatbotPage() {
     },
   ]);
 
+  // Add RAG API state
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
   const { unlockAchievement } = useAchievements();
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [fileUploadProgress, setFileUploadProgress] = useState(0);
+  const [lastUploadResult, setLastUploadResult] = useState<{
+    success: boolean;
+    filename: string;
+    message: string;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -62,10 +82,25 @@ export default function ChatbotPage() {
   // Add the ref outside the effect
   const processedQueryRef = useRef<boolean>(false);
 
-  // Chat settings state
+  // Chat settings state - set memory (RAG) to false by default
   const [chatSettings, setChatSettings] = useState({
-    memory: true,
+    memory: true, // Maps to RAG enabledd - changed from true to false
+    webSearch: false, // Maps to web search enabled
+  });
+
+  // Add state to track which feature is actively being used in the current response
+  const [activeFeatures, setActiveFeatures] = useState({
+    rag: false,
     webSearch: false,
+  });
+
+  // Add state for tracking which toggles are currently being updated
+  const [updatingToggles, setUpdatingToggles] = useState<{
+    rag: boolean;
+    websearch: boolean;
+  }>({
+    rag: false,
+    websearch: false,
   });
 
   // Handle query params for direct message - refactored to fix duplicate message issue
@@ -87,6 +122,31 @@ export default function ChatbotPage() {
         processedQueryRef.current = false;
       }
     };
+  }, [searchParams]);
+
+  // Handle feature toggles from URL parameters
+  useEffect(() => {
+    const ragParam = searchParams?.get("rag");
+    const webParam = searchParams?.get("web");
+
+    // Only update if valid parameters are present
+    const updates: Partial<typeof chatSettings> = {};
+
+    if (ragParam === "true" || ragParam === "false") {
+      updates.memory = ragParam === "true";
+    }
+
+    if (webParam === "true" || webParam === "false") {
+      updates.webSearch = webParam === "true";
+    }
+
+    // Apply updates if any parameters were valid
+    if (Object.keys(updates).length > 0) {
+      setChatSettings((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+    }
   }, [searchParams]);
 
   // Scroll to bottom on new messages
@@ -114,21 +174,20 @@ export default function ChatbotPage() {
     setInputValue(e.target.value);
   };
 
-  const handleSubmit = (
+  // Enhanced submit handler that sends toggle state with each request
+  const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
-    submittedText: string
+    submittedText?: string
   ) => {
     e.preventDefault();
     const text = submittedText || inputValue;
 
     if (!text?.trim()) return;
 
-    // Prevent duplicate submissions while loading
+    // Prevent duplicate submissions while loadingach message
     if (isLoading) return;
 
-    // Add console log to debug duplicates
-    console.log("Submitting message:", text);
-
+    // Add to UI immediately for better UX
     const newMessage = {
       text: text,
       isUser: true,
@@ -141,6 +200,7 @@ export default function ChatbotPage() {
     // Start loading and record the start time
     setIsLoading(true);
     setLoadingStartTime(Date.now());
+    setApiError(null);
 
     // Check for first message achievement
     if (!hasSentFirstMessage) {
@@ -148,38 +208,85 @@ export default function ChatbotPage() {
       setHasSentFirstMessage(true);
     }
 
-    // Add memory context if enabled
-    const useMemory = chatSettings.memory;
-    const useWebSearch = chatSettings.webSearch;
+    try {
+      // Call RAG API with current feature toggle states
+      const response = await chatApi.sendMessage({
+        message: text,
+        session_id: sessionId || undefined,
+        settings: {
+          rag_enabled: chatSettings.memory,
+          web_search_enabled: chatSettings.webSearch,
+        },
+      });
 
-    // Log settings being used
-    console.log(`Using memory: ${useMemory}, Web search: ${useWebSearch}`);
+      // Update session ID if needed
+      if (!sessionId || sessionId !== response.session_id) {
+        setSessionId(response.session_id);
+      }
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "I can analyze that image for you. Let me take a look...",
-        "Based on the code you shared, I'd recommend refactoring the main function.",
-        "That's an interesting question! The multimodal approach combines several types of data processing.",
-        "I can help you understand how neural networks process audio data.",
-      ];
+      // Filter out thinking sections before adding to messages
+      const filteredMessage = filterThinkingSections(response.message);
 
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
+      // Detect feature usage based on response content
+      // This is a simple heuristic - you might want to have the backend explicitly tell you
+      const usedRag =
+        filteredMessage.toLowerCase().includes("from knowledge base") ||
+        filteredMessage.toLowerCase().includes("according to your documents");
+      const usedWebSearch =
+        filteredMessage.toLowerCase().includes("web search") ||
+        filteredMessage.toLowerCase().includes("i found online");
 
-      // Add the actual message and remove loading state
+      // Update active feature indicators
+      setActiveFeatures({
+        rag: usedRag,
+        webSearch: usedWebSearch,
+      });
+
+      // Add response to messages
       setMessages((prev) => [
         ...prev,
         {
-          text: randomResponse,
+          text: filteredMessage,
           isUser: false,
           timestamp: new Date(),
         },
       ]);
 
+      // Play sound for successful response
+      playSound("receive");
+    } catch (error) {
+      console.error("Error calling RAG API:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unknown error occurred. Please check that your API server is running.";
+
+      setApiError(errorMessage);
+
+      // Add error message to chat with instructions
+      // Filter this too in case error messages contain thinking sections
+      const filteredErrorMsg = filterThinkingSections(`Error: ${errorMessage}
+
+To fix connection issues:
+1. Make sure the API server is running (python run_api.py)
+2. Check that your .env.local has NEXT_PUBLIC_API_URL set correctly
+3. Verify there are no CORS issues or firewalls blocking the connection`);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: filteredErrorMsg,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+
+      // Play error sound
+      playSound("error");
+    } finally {
       setIsLoading(false);
       setLoadingStartTime(null);
-    }, 1500);
+    }
   };
 
   // Play sound effects
@@ -299,8 +406,9 @@ export default function ChatbotPage() {
 
   const [statusMessage, setStatusMessage] = useState("");
 
-  // Enhanced handle option change with status feedback
-  const handleOptionChange = (id: string, isActive: boolean) => {
+  // Enhanced handle option change with status feedback and API integration
+  const handleOptionChange = async (id: string, isActive: boolean) => {
+    // Update local UI state immediately for responsive feel
     setChatSettings((prev) => ({
       ...prev,
       [id]: isActive,
@@ -308,19 +416,76 @@ export default function ChatbotPage() {
 
     playSound("toggle");
 
-    // Show status message with keyboard shortcut hint
-    let statusMsg = "";
-    switch (id) {
-      case "memory":
-        statusMsg = `Memory ${isActive ? "enabled" : "disabled"} [Alt+M]`;
-        break;
-      case "webSearch":
-        statusMsg = `Web search ${isActive ? "enabled" : "disabled"} [Alt+W]`;
-        break;
+    // Map UI control IDs to API feature names
+    const featureMap = {
+      memory: "rag",
+      webSearch: "websearch",
+    };
+
+    // Skip API call if no session exists yet - just local UI state change
+    if (!sessionId) {
+      showTemporaryStatus(
+        `No active session. ${id} toggle will apply after sending a message.`
+      );
+      return;
     }
 
-    if (statusMsg) {
-      showTemporaryStatus(statusMsg);
+    try {
+      // Set loading state for the specific toggle being updated
+      if (id === "memory") {
+        setUpdatingToggles((prev) => ({ ...prev, rag: true }));
+      } else if (id === "webSearch") {
+        setUpdatingToggles((prev) => ({ ...prev, websearch: true }));
+      }
+
+      // Call the API to update the server-side state
+      const apiFeature = featureMap[id as keyof typeof featureMap];
+
+      if (apiFeature) {
+        const result = await chatApi.toggleFeature({
+          session_id: sessionId,
+          feature: apiFeature as "rag" | "websearch",
+          enabled: isActive,
+        });
+
+        // Filter any thinking sections from toggle messages too
+        showTemporaryStatus(filterThinkingSections(result.message));
+      }
+    } catch (error) {
+      console.error(`Error toggling ${id}:`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to toggle feature";
+
+      // Revert UI state as API call failed
+      setChatSettings((prev) => ({
+        ...prev,
+        [id]: !isActive, // Revert to previous state
+      }));
+
+      setApiError(errorMessage);
+      showTemporaryStatus(`Error: ${errorMessage}`);
+
+      // Add system message to chat about the error - filter this too
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: filterThinkingSections(
+            `Failed to toggle ${id}: ${errorMessage}`
+          ),
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+
+      // Play error sound
+      playSound("error");
+    } finally {
+      // Clear loading state for the specific toggle
+      if (id === "memory") {
+        setUpdatingToggles((prev) => ({ ...prev, rag: false }));
+      } else if (id === "webSearch") {
+        setUpdatingToggles((prev) => ({ ...prev, websearch: false }));
+      }
     }
   };
 
@@ -390,12 +555,138 @@ export default function ChatbotPage() {
     );
   };
 
+  // Handle file upload with API integration
+  const handleFileUpload = async (file: File) => {
+    if (!sessionId) {
+      showTemporaryStatus("No active session. Send a message first.");
+      return;
+    }
+
+    try {
+      // Reset state
+      setFileUploadProgress(0);
+      setLastUploadResult(null);
+
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setFileUploadProgress((prev) => {
+          const newValue = Math.min(prev + Math.random() * 15, 90);
+          return newValue;
+        });
+      }, 500);
+
+      // Upload file
+      const result = await chatApi.uploadDocument(sessionId, file);
+
+      clearInterval(progressInterval);
+      setFileUploadProgress(100);
+      setLastUploadResult(result);
+
+      // Show success message
+      showTemporaryStatus(`File uploaded: ${file.name}`);
+      playSound("receive");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload file";
+      setApiError(errorMessage);
+      showTemporaryStatus(`Error: ${errorMessage}`);
+      playSound("error");
+    }
+  };
+
+  // Custom FileUpload component that uses the API integration
+  const CustomFileUpload = () => (
+    <div className="retro-file-upload">
+      <div className="file-upload-header">
+        <span className="file-header-text">DOCUMENT UPLOAD</span>
+      </div>
+
+      <div className="file-upload-content">
+        <FileUploadDemo
+          onUpload={handleFileUpload}
+          disabled={!sessionId || isLoading}
+        />
+
+        {fileUploadProgress > 0 && fileUploadProgress < 100 && (
+          <div className="progress-container">
+            <div className="progress-label">
+              UPLOADING: {Math.round(fileUploadProgress)}%
+            </div>
+            <div className="progress-bar-bg">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${fileUploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {lastUploadResult && (
+          <div
+            className={`upload-result ${
+              lastUploadResult.success ? "success" : "error"
+            }`}
+          >
+            {lastUploadResult.message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Fetch session info and initialize feature states
+  useEffect(() => {
+    // Skip if no session exists yet
+    if (!sessionId) return;
+
+    const fetchSessionInfo = async () => {
+      try {
+        // Set loading states
+        setUpdatingToggles({
+          rag: true,
+          websearch: true,
+        });
+
+        // Fetch session information from API
+        const sessionInfo = await chatApi.getSession(sessionId);
+
+        // Update chat settings based on backend state
+        setChatSettings({
+          memory: sessionInfo.rag_enabled,
+          webSearch: sessionInfo.web_search_enabled,
+        });
+
+        console.log("Initialized feature states from backend:", {
+          rag: sessionInfo.rag_enabled,
+          web_search: sessionInfo.web_search_enabled,
+        });
+      } catch (error) {
+        console.error("Error fetching session info:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch session state";
+        setApiError(errorMessage);
+        showTemporaryStatus(`Error syncing features: ${errorMessage}`);
+      } finally {
+        // Clear loading states
+        setUpdatingToggles({
+          rag: false,
+          websearch: false,
+        });
+      }
+    };
+
+    fetchSessionInfo();
+  }, [sessionId]); // Only run when sessionId changes
+
   return (
     <div className="flex flex-col h-[80vh] max-w-3xl mx-auto pt-4 md:pt-0">
       <div className="flex items-center justify-center mb-4 md:mb-6">
         <MessageSquareText className="h-5 w-5 md:h-6 md:w-6 text-green-400 mr-2" />
         <h1 className="text-xl md:text-2xl font-pixel">
-          Multimodal AI Chatbot
+          Multimodal RAG Chatbot
         </h1>
       </div>
 
@@ -514,21 +805,48 @@ export default function ChatbotPage() {
           <span className="text-sm md:text-base font-medium text-gray-400 dark:text-gray-300 flex items-center gap-2">
             <span className="hidden sm:inline">Features:</span>
             {chatSettings.memory && (
-              <span className="px-1.5 py-0.5 rounded bg-gray-900 text-xs flex items-center gap-1 border border-green-500/20">
-                <BrainCircuit className="h-3 w-3 text-green-400" />
-                <span className="hidden sm:inline text-green-300">Memory</span>
+              <span
+                className={cn(
+                  "px-1.5 py-0.5 rounded bg-gray-900 text-xs flex items-center gap-1 border border-green-500/20",
+                  activeFeatures.rag ? "bg-green-900/20" : "" // Highlight when actively used
+                )}
+              >
+                <BrainCircuit
+                  className={cn(
+                    "h-3 w-3 text-green-400",
+                    activeFeatures.rag ? "animate-pulse" : "" // Add pulse animation when in use
+                  )}
+                />
+                <span className="hidden sm:inline text-green-300">RAG</span>
               </span>
             )}
             {chatSettings.webSearch && (
-              <span className="px-1.5 py-0.5 rounded bg-gray-900 text-xs flex items-center gap-1 border border-green-500/20">
-                <Globe className="h-3 w-3 text-green-400" />
+              <span
+                className={cn(
+                  "px-1.5 py-0.5 rounded bg-gray-900 text-xs flex items-center gap-1 border border-green-500/20",
+                  activeFeatures.webSearch ? "bg-green-900/20" : "" // Highlight when actively used
+                )}
+              >
+                <Globe
+                  className={cn(
+                    "h-3 w-3 text-green-400",
+                    activeFeatures.webSearch ? "animate-pulse" : "" // Add pulse animation when in use
+                  )}
+                />
                 <span className="hidden sm:inline text-green-300">Web</span>
+              </span>
+            )}
+            {sessionId && (
+              <span className="px-1.5 py-0.5 rounded bg-gray-900 text-xs flex items-center gap-1 border border-green-500/20">
+                <span className="hidden sm:inline text-green-300">
+                  Session: {sessionId.substring(0, 6)}
+                </span>
               </span>
             )}
           </span>
         </div>
 
-        {/* Add Control Panel */}
+        {/* Add Control Panel with loading states for toggles */}
         <RetroControlPanel
           expanded={controlsExpanded}
           onToggleExpanded={() => {
@@ -542,6 +860,9 @@ export default function ChatbotPage() {
           onFileOpen={toggleFileUpload}
           onVoiceRecord={handleVoiceRecord}
           activeOptions={chatSettings}
+          updatingOptions={updatingToggles}
+          disabled={!sessionId}
+          activeFeatures={activeFeatures}
         />
 
         <AnimatePresence>
@@ -553,7 +874,7 @@ export default function ChatbotPage() {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <FileUploadDemo />
+              <CustomFileUpload />
             </motion.div>
           )}
         </AnimatePresence>

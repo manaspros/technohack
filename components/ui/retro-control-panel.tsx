@@ -12,6 +12,8 @@ import {
   Settings2,
   Minimize,
   Keyboard,
+  Loader2,
+  Zap,
 } from "lucide-react";
 
 interface ControlOption {
@@ -31,6 +33,13 @@ interface RetroControlPanelProps {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   activeOptions?: Record<string, boolean>;
+  updatingOptions?: Record<string, boolean>; // Add loading state for toggles
+  disabled?: boolean; // Add disabled prop for when no session exists
+  activeFeatures?: {
+    // Add state to show when features are being actively used
+    rag: boolean;
+    webSearch: boolean;
+  };
 }
 
 export function RetroControlPanel({
@@ -44,6 +53,15 @@ export function RetroControlPanel({
     memory: true,
     webSearch: false,
   },
+  updatingOptions = {
+    memory: false,
+    webSearch: false,
+  },
+  disabled = false,
+  activeFeatures = {
+    rag: false,
+    webSearch: false,
+  },
 }: RetroControlPanelProps) {
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -53,22 +71,34 @@ export function RetroControlPanel({
     {
       id: "memory",
       icon: <BrainCircuit className="h-4 w-4" />,
+      activeIcon: <BrainCircuit className="h-4 w-4" />,
       label: "Memory",
-      tooltip: "Toggle AI memory (Alt+M)",
+      tooltip: disabled
+        ? "Send a message first to enable RAG"
+        : activeFeatures.rag
+        ? "RAG is actively retrieving information (Alt+M)"
+        : "Toggle AI memory (Alt+M)",
       type: "toggle",
     },
     {
       id: "webSearch",
       icon: <Globe className="h-4 w-4" />,
+      activeIcon: <Globe className="h-4 w-4" />,
       label: "Web",
-      tooltip: "Toggle web search (Alt+W)",
+      tooltip: disabled
+        ? "Send a message first to enable Web Search"
+        : activeFeatures.webSearch
+        ? "Web search is actively retrieving information (Alt+W)"
+        : "Toggle web search (Alt+W)",
       type: "toggle",
     },
     {
       id: "upload",
       icon: <PlusSquare className="h-4 w-4" />,
       label: "Upload",
-      tooltip: "Upload files (Alt+U)",
+      tooltip: disabled
+        ? "Send a message first to enable Upload"
+        : "Upload files (Alt+U)",
       type: "button",
     },
     {
@@ -81,11 +111,34 @@ export function RetroControlPanel({
   ];
 
   const handleToggle = (id: string) => {
+    if (disabled) {
+      // If disabled, show tooltip but don't toggle
+      setShowTooltip(
+        controlOptions.find((opt) => opt.id === id)?.tooltip || null
+      );
+      return;
+    }
+
+    // Skip if currently updating this toggle
+    if (
+      (id === "memory" && updatingOptions.memory) ||
+      (id === "webSearch" && updatingOptions.webSearch)
+    ) {
+      return;
+    }
+
     onOptionChange?.(id, !activeOptions[id]);
   };
 
   const handleButtonClick = (id: string) => {
     if (id === "upload") {
+      if (disabled) {
+        // If disabled, show tooltip but don't allow upload
+        setShowTooltip(
+          controlOptions.find((opt) => opt.id === id)?.tooltip || null
+        );
+        return;
+      }
       onFileOpen?.();
     } else if (id === "voice") {
       onVoiceRecord?.();
@@ -120,6 +173,21 @@ export function RetroControlPanel({
                       onMouseEnter={() => setShowTooltip(option.tooltip)}
                       onMouseLeave={() => setShowTooltip(null)}
                       tooltipText={option.tooltip}
+                      isUpdating={
+                        option.id === "memory"
+                          ? updatingOptions.memory
+                          : option.id === "webSearch"
+                          ? updatingOptions.webSearch
+                          : false
+                      }
+                      disabled={disabled}
+                      isActivelyUsed={
+                        option.id === "memory"
+                          ? activeFeatures.rag
+                          : option.id === "webSearch"
+                          ? activeFeatures.webSearch
+                          : false
+                      }
                     />
                   ) : (
                     <RetroButton
@@ -131,6 +199,7 @@ export function RetroControlPanel({
                       onMouseEnter={() => setShowTooltip(option.tooltip)}
                       onMouseLeave={() => setShowTooltip(null)}
                       tooltipText={option.tooltip}
+                      disabled={disabled && option.id === "upload"}
                     />
                   )}
                 </React.Fragment>
@@ -234,6 +303,9 @@ interface RetroToggleProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   tooltipText: string;
+  isUpdating?: boolean;
+  disabled?: boolean;
+  isActivelyUsed?: boolean; // Add prop for when the feature is being actively used
 }
 
 function RetroToggle({
@@ -245,6 +317,9 @@ function RetroToggle({
   onMouseEnter,
   onMouseLeave,
   tooltipText,
+  isUpdating = false,
+  disabled = false,
+  isActivelyUsed = false,
 }: RetroToggleProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const lastActiveState = useRef(isActive);
@@ -289,19 +364,33 @@ function RetroToggle({
           "flex flex-col items-center justify-center w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-md transition-colors",
           isActive
             ? "bg-green-500/30 border-2 border-green-500"
-            : "bg-gray-900/90 border-2 border-gray-700 hover:border-gray-600"
+            : "bg-gray-900/90 border-2 border-gray-700 hover:border-gray-600",
+          disabled && "opacity-50 cursor-not-allowed hover:border-gray-700",
+          isActivelyUsed && isActive && "shadow-[0_0_12px_rgba(74,222,128,0.5)]" // Add glow effect when actively used
         )}
         onClick={onToggle}
         aria-pressed={isActive}
         aria-label={`${label} - ${tooltipText}`}
+        disabled={disabled}
       >
         <div
           className={cn(
             "text-xs sm:text-sm mt-0.5 sm:mt-1 transition-colors",
-            isActive ? "text-green-400" : "text-gray-500"
+            isActive ? "text-green-400" : "text-gray-500",
+            isActivelyUsed && isActive && "animate-pulse" // Add pulse animation when actively used
           )}
         >
-          {icon}
+          {isUpdating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isActivelyUsed && isActive ? (
+            <div className="relative">
+              {icon}
+              <Zap className="absolute -right-2 -top-2 h-2 w-2 text-yellow-300" />{" "}
+              {/* Activity indicator */}
+            </div>
+          ) : (
+            icon
+          )}
         </div>
         <div
           className={cn(
@@ -318,8 +407,10 @@ function RetroToggle({
           className={cn(
             "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-gray-700",
             isActive
-              ? "bg-green-500 shadow-[0_0_4px_0_rgba(74,222,128,0.7)]"
-              : "bg-gray-800"
+              ? isActivelyUsed
+                ? "bg-yellow-500 shadow-[0_0_4px_0_rgba(234,179,8,0.7)]" // Yellow for active usage
+                : "bg-green-500 shadow-[0_0_4px_0_rgba(74,222,128,0.7)]" // Green for enabled
+              : "bg-gray-800" // Gray for disabled
           )}
         />
       </div>
@@ -336,6 +427,7 @@ interface RetroButtonProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   tooltipText: string;
+  disabled?: boolean;
 }
 
 function RetroButton({
@@ -347,6 +439,7 @@ function RetroButton({
   onMouseEnter,
   onMouseLeave,
   tooltipText,
+  disabled = false,
 }: RetroButtonProps) {
   return (
     <div
@@ -359,10 +452,12 @@ function RetroButton({
           "flex flex-col items-center justify-center w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-md transition-colors",
           isActive
             ? "bg-red-500/30 border-2 border-red-500"
-            : "bg-gray-900/90 border-2 border-gray-700 hover:bg-gray-800/80"
+            : "bg-gray-900/90 border-2 border-gray-700 hover:bg-gray-800/80",
+          disabled && "opacity-50 cursor-not-allowed hover:bg-gray-900/90"
         )}
         onClick={onClick}
         aria-label={`${label} - ${tooltipText}`}
+        disabled={disabled}
       >
         <div
           className={cn(

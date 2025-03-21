@@ -306,3 +306,72 @@ p {
   font-smooth: never;
   -webkit-font-smoothing: none;
 }
+
+/* Add these styles to your globals.css file */
+
+.retro-file-upload {
+  background-color: #202020;
+  border: 3px solid #00ff00;
+  color: #00ff00;
+  font-family: "Courier New", monospace;
+  margin-bottom: 15px;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+.file-upload-header {
+  background-color: #000000;
+  padding: 8px 12px;
+  border-bottom: 1px solid #00ff00;
+}
+
+.file-header-text {
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.file-upload-content {
+  padding: 12px;
+}
+
+.progress-container {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.progress-label {
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #00ffff;
+}
+
+.progress-bar-bg {
+  height: 15px;
+  background-color: #101010;
+  border: 1px solid #00ff00;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #00ff00;
+  transition: width 0.2s ease;
+}
+
+.upload-result {
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.upload-result.success {
+  border-color: #00ff00;
+  background-color: #001000;
+  color: #00ff00;
+}
+
+.upload-result.error {
+  border-color: #ff0000;
+  background-color: #100000;
+  color: #ff0000;
+}
