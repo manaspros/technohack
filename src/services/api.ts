@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Define API base URL - configure for development and production
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Create an axios instance with default config
 const apiClient = axios.create({
@@ -9,8 +9,31 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds
+  timeout: 300000, // Increase to 5 minutes (300,000 ms) for very long operations
 });
+
+// Add request interceptor for debugging
+apiClient.interceptors.request.use(
+  (config) => {
+    console.log(`Making request to: ${config.baseURL}${config.url}`);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log(`Received response from: ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error("API error:", error);
+    return Promise.reject(error);
+  }
+);
 
 // Types for API requests and responses
 export interface Message {
@@ -21,6 +44,10 @@ export interface Message {
 export interface ChatRequest {
   message: string;
   session_id?: string;
+  settings?: {
+    rag_enabled?: boolean;
+    web_search_enabled?: boolean;
+  };
 }
 
 export interface ChatResponse {
@@ -71,7 +98,9 @@ const handleApiError = (error: any): never => {
         typeof serverError === "string" ? serverError : "Server error";
     } else if (error.request) {
       // No response received
-      errorMessage = "No response from server. Please check your connection.";
+      errorMessage =
+        "No response from server. Please make sure the API server is running at " +
+        BASE_URL;
     } else {
       // Request setup error
       errorMessage = error.message || "Error setting up request";

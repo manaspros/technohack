@@ -7,7 +7,15 @@ import { Loader, Sparkles, Upload, Check, X, RefreshCw } from "lucide-react";
 import { useAchievements } from "@/components/ui/achievement-notification";
 import { cn } from "@/lib/utils";
 
-export function FileUploadDemo() {
+interface FileUploadDemoProps {
+  onUpload?: (file: File) => Promise<void>;
+  disabled?: boolean;
+}
+
+export function FileUploadDemo({
+  onUpload,
+  disabled = false,
+}: FileUploadDemoProps) {
   interface UploadedFile {
     name: string;
     size: number;
@@ -22,6 +30,7 @@ export function FileUploadDemo() {
   );
   const { unlockAchievement } = useAchievements();
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   // Function to ensure loading is shown for at least 1.5 seconds
   const ensureMinimumLoadingTime = (callback: () => void) => {
@@ -91,6 +100,28 @@ export function FileUploadDemo() {
     if (bytes < 1024) return bytes + " bytes";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (file && onUpload) {
+      await onUpload(file);
+      setFile(null); // Reset file selection after upload
+
+      // Reset file input
+      const fileInput = document.getElementById(
+        "file-upload"
+      ) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
+    }
   };
 
   return (
