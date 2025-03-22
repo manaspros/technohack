@@ -70,6 +70,13 @@ export interface FeatureToggleRequest {
   enabled: boolean;
 }
 
+export interface FeatureToggleResponse {
+  success: boolean;
+  feature: string;
+  enabled: boolean;
+  message: string;
+}
+
 export interface ConversationSaveRequest {
   session_id: string;
   filename: string;
@@ -116,7 +123,17 @@ const handleApiError = (error: any): never => {
 export const chatApi = {
   sendMessage: async (request: ChatRequest): Promise<ChatResponse> => {
     try {
-      const response = await apiClient.post<ChatResponse>("/chat", request);
+      // Ensure settings are properly passed
+      const payload = {
+        ...request,
+        settings: {
+          rag_enabled: request.settings?.rag_enabled,
+          web_search_enabled: request.settings?.web_search_enabled,
+        },
+      };
+
+      console.log("Sending chat request with settings:", payload);
+      const response = await apiClient.post<ChatResponse>("/chat", payload);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -125,12 +142,20 @@ export const chatApi = {
 
   toggleFeature: async (
     request: FeatureToggleRequest
-  ): Promise<{ success: boolean; message: string }> => {
+  ): Promise<FeatureToggleResponse> => {
     try {
-      const response = await apiClient.post<{
-        success: boolean;
-        message: string;
-      }>("/features/toggle", request);
+      // Log toggle request for debugging
+      console.log(
+        `Toggling feature ${request.feature} to ${
+          request.enabled ? "enabled" : "disabled"
+        } for session ${request.session_id}`
+      );
+
+      const response = await apiClient.post<FeatureToggleResponse>(
+        "/features/toggle",
+        request
+      );
+
       return response.data;
     } catch (error) {
       return handleApiError(error);

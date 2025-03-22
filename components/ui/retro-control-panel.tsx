@@ -37,8 +37,8 @@ interface RetroControlPanelProps {
   disabled?: boolean; // Add disabled prop for when no session exists
   activeFeatures?: {
     // Add state to show when features are being actively used
-    rag: boolean;
-    webSearch: boolean;
+    rag?: boolean;
+    webSearch?: boolean;
   };
 }
 
@@ -54,8 +54,8 @@ export function RetroControlPanel({
     webSearch: false,
   },
   updatingOptions = {
-    memory: false,
-    webSearch: false,
+    rag: false,
+    websearch: false,
   },
   disabled = false,
   activeFeatures = {
@@ -66,6 +66,10 @@ export function RetroControlPanel({
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+
+  const uploadTooltip = disabled
+    ? "Send a message first to create a session"
+    : "Upload documents to teach the AI [Alt+U]";
 
   const controlOptions: ControlOption[] = [
     {
@@ -96,9 +100,7 @@ export function RetroControlPanel({
       id: "upload",
       icon: <PlusSquare className="h-4 w-4" />,
       label: "Upload",
-      tooltip: disabled
-        ? "Send a message first to enable Upload"
-        : "Upload files (Alt+U)",
+      tooltip: uploadTooltip,
       type: "button",
     },
     {
@@ -121,8 +123,8 @@ export function RetroControlPanel({
 
     // Skip if currently updating this toggle
     if (
-      (id === "memory" && updatingOptions.memory) ||
-      (id === "webSearch" && updatingOptions.webSearch)
+      (id === "memory" && updatingOptions.rag) ||
+      (id === "webSearch" && updatingOptions.websearch)
     ) {
       return;
     }
@@ -175,9 +177,9 @@ export function RetroControlPanel({
                       tooltipText={option.tooltip}
                       isUpdating={
                         option.id === "memory"
-                          ? updatingOptions.memory
+                          ? updatingOptions.rag
                           : option.id === "webSearch"
-                          ? updatingOptions.webSearch
+                          ? updatingOptions.websearch
                           : false
                       }
                       disabled={disabled}

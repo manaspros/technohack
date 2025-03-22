@@ -1,82 +1,91 @@
-import { useState, useCallback } from "react";
-import chatApi, { DocumentUploadResponse } from "../services/api";
+import { useState } from "react";
+import chatApi from "../services/api";
 
 interface UseDocumentUploadProps {
   sessionId: string | null;
+  onStatusMessage?: (message: string) => void;
+  onUploadSuccess?: (file: File, result: any) => void;
+  onUploadError?: (error: string) => void;
 }
 
-interface UseDocumentUploadResult {
-  isUploading: boolean;
-  uploadProgress: number;
-  lastUploadResult: DocumentUploadResponse | null;
-  error: string | null;
-  uploadDocument: (file: File) => Promise<DocumentUploadResponse | null>;
-  resetUploadState: () => void;
-}
-
-export const useDocumentUpload = ({
+export function useDocumentUpload({
   sessionId,
-}: UseDocumentUploadProps): UseDocumentUploadResult => {
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
-  const [lastUploadResult, setLastUploadResult] =
-    useState<DocumentUploadResponse | null>(null);
+  onStatusMessage,
+  onUploadSuccess,
+  onUploadError,
+}: UseDocumentUploadProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [lastUploadResult, setLastUploadResult] = useState<{
+    success: boolean;
+    filename: string;
+    message: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadDocument = useCallback(
-    async (file: File): Promise<DocumentUploadResponse | null> => {
-      if (!sessionId) {
-        setError("No active session. Please send a message first.");
-        return null;
-      }
+  const handleFileUpload = async (file: File) => {
+    if (!sessionId) {
+      const errorMessage = "No active session. Send a message first.";
+      setError(errorMessage);
+      if (onStatusMessage) onStatusMessage(errorMessage);
+      if (onUploadError) onUploadError(errorMessage);
+      return false;
+    }
 
-      try {
-        setIsUploading(true);
-        setUploadProgress(0);
-        setError(null);
+    try {
+      // Reset state
+      setUploadProgress(0);
+      setLastUploadResult(null);
+      setError(null);
+      setIsUploading(true);
 
-        // Simulate progress for better user feedback (actual progress not available with axios by default)
-        const progressInterval = setInterval(() => {
-          setUploadProgress((prev) => {
-            const increment = Math.random() * 15;
-            const newValue = prev + increment;
-            return newValue >= 90 ? 90 : newValue; // Cap at 90% until complete
-          });
-        }, 500);
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newValue = Math.min(prev + Math.random() * 15, 90);
+          return newValue;
+        });
+      }, 500);
 
-        const result = await chatApi.uploadDocument(sessionId, file);
+      // Upload file
+      const result = await chatApi.uploadDocument(sessionId, file);
 
-        clearInterval(progressInterval);
-        setUploadProgress(100);
-        setLastUploadResult(result);
-        return result;
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to upload document"
-        );
-        return null;
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [sessionId]
-  );
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setLastUploadResult(result);
 
-  const resetUploadState = useCallback(() => {
-    setIsUploading(false);
+      // Show success message
+      const message = `File uploaded: ${file.name}`;
+      if (onStatusMessage) onStatusMessage(message);
+      if (onUploadSuccess) onUploadSuccess(file, result);
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload file";
+      setError(errorMessage);
+
+      if (onStatusMessage) onStatusMessage(`Error: ${errorMessage}`);
+      if (onUploadError) onUploadError(errorMessage);
+      return false;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const resetUpload = () => {
     setUploadProgress(0);
     setLastUploadResult(null);
     setError(null);
-  }, []);
+  };
 
   return {
     isUploading,
     uploadProgress,
     lastUploadResult,
     error,
-    uploadDocument,
-    resetUploadState,
+    handleFileUpload,
+    resetUpload,
   };
-};
-
-export default useDocumentUpload;
+}

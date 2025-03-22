@@ -1,8 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import chatApi, { Message, SessionInfo } from "../services/api";
+import { useSearchParams } from "next/navigation";
+import { useFeatureControls } from "./useFeatureControls";
+import { filterThinkingSections } from "../utils/text-filters";
+import { useAchievements } from "@/components/ui/achievement-notification";
 
 interface UseChatSessionProps {
   initialSessionId?: string;
+  onStatusMessage?: (message: string) => void;
 }
 
 interface UseChatSessionResult {
@@ -24,6 +29,7 @@ interface UseChatSessionResult {
 
 export const useChatSession = ({
   initialSessionId,
+  onStatusMessage,
 }: UseChatSessionProps = {}): UseChatSessionResult => {
   const [sessionId, setSessionId] = useState<string | null>(
     initialSessionId || null
@@ -32,6 +38,27 @@ export const useChatSession = ({
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const processedQueryRef = useRef<boolean>(false);
+  const { unlockAchievement } = useAchievements();
+
+  // Initialize feature controls
+  const {
+    chatSettings,
+    updatingToggles,
+    activeFeatures,
+    handleOptionChange,
+    updateActiveFeatures,
+    updateSessionId,
+  } = useFeatureControls({
+    initialSessionId: sessionId,
+    initialSettings: { memory: true, webSearch: false },
+    onStatusMessage,
+    onError: (message) => {
+      setError(message);
+      if (onStatusMessage) onStatusMessage(`Error: ${message}`);
+    },
+  });
 
   // Load session info when sessionId changes
   useEffect(() => {
@@ -58,6 +85,61 @@ export const useChatSession = ({
 
     fetchSessionInfo();
   }, [sessionId]);
+
+  // Update sessionId in our feature controls hook when it changes
+  useEffect(() => {
+    updateSessionId(sessionId);
+  }, [sessionId, updateSessionId]);
+
+  // Handle query params for direct message
+  useEffect(() => {
+    const queryMsg = searchParams?.get("q");
+
+    if (queryMsg && messages.length === 1 && !processedQueryRef.current) {
+      processedQueryRef.current = true;
+
+      // Use setTimeout to ensure this runs after initial render
+      setTimeout(() => {
+        sendMessage(queryMsg);
+      }, 100);
+    }
+
+    return () => {
+      // Only reset the ref when search params change to a different value
+      if (!searchParams?.get("q")) {
+        processedQueryRef.current = false;
+      }
+    };
+  }, [searchParams]);
+
+  // Handle feature toggles from URL parameters
+  useEffect(() => {
+    const ragParam = searchParams?.get("rag");
+    const webParam = searchParams?.get("web");
+
+    // Only update if valid parameters are present
+    if (
+      ragParam === "true" ||
+      ragParam === "false" ||
+      webParam === "true" ||
+      webParam === "false"
+    ) {
+      const updates: any = {};
+
+      if (ragParam === "true" || ragParam === "false") {
+        updates.memory = ragParam === "true";
+      }
+
+      if (webParam === "true" || webParam === "false") {
+        updates.webSearch = webParam === "true";
+      }
+
+      // Apply appropriate settings by calling handleOptionChange for each setting
+      Object.entries(updates).forEach(([key, value]) => {
+        handleOptionChange(key, value as boolean);
+      });
+    }
+  }, [searchParams]);
 
   // Send message to the chat API
   const sendMessage = useCallback(

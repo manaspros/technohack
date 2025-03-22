@@ -354,6 +354,7 @@ p {
   height: 100%;
   background-color: #00ff00;
   transition: width 0.2s ease;
+  animation: progress-glow 1.5s infinite;
 }
 
 .upload-result {
@@ -374,4 +375,31 @@ p {
   border-color: #ff0000;
   background-color: #100000;
   color: #ff0000;
+}
+
+/* Retro file uploader styles */
+.retro-file-uploader button {
+  transition: all 0.2s ease;
+}
+
+.retro-file-uploader button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.retro-file-uploader button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Progress bar animation */
+@keyframes progress-glow {
+  0% {
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+  }
 }
